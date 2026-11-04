@@ -2,19 +2,29 @@
 # package in `dsh.profile.bundles`. A profile-level patch can still disable the
 # row by id.
 #
-# The row mounts an intentionally empty Host half (lib/index.js). The feature is
-# entirely client-side: the sidebar foot gets a 抖音 button, and pressing it
-# mounts a real Electron <webview> into a fixed bottom-left panel, using the
-# Desktop guest lease from `dshDesktop.browser.acquire()`.
+# The row mounts both halves:
 #
-# Why the guest lease and not an iframe: douyin.com answers with
-# `X-Frame-Options: DENY` and a CSP `frame-ancestors` list that does not include
-# 127.0.0.1, so an iframe is rejected outright. A webview is a separate renderer
-# guest, which `frame-ancestors` cannot reach.
+#   - client half (`lib/client.js`) — the sidebar foot gets a 抖音 button, and
+#     pressing it mounts the panel. On Electron Desktop it mounts a real
+#     `<webview>` guest through the preload bridge `dshDesktop.browser.acquire()`
+#     (the Desktop guest lease, enforced by `will-attach-webview`).
+#   - host half (`lib/index.js`) — 2026-11-04, added for DSHM: there is no
+#     preload bridge and no `<webview>` tag, so the panel used to show only
+#     「这个窗口用不了内嵌抖音」. The host half now registers a loopback reverse
+#     proxy at `/__dyw` that forwards to https://www.douyin.com, strips
+#     `X-Frame-Options` / `Content-Security-Policy` / `report-to`, rewrites
+#     `Set-Cookie` onto the local origin, and injects a same-origin shim so the
+#     page's own fetch/XHR also stay on `/__dyw`. The client half probes
+#     `/__dyw/__ping` and falls back to an `<iframe>` over that proxy whenever the
+#     Electron bridge is missing.
 #
-# The panel is only usable in the Electron window (`dsh-app://app`), because the
-# preload bridge `dshDesktop` is injected only there. In a browser tab the button
-# still appears and the panel explains why it cannot work.
+# Why a webview / a proxy at all: douyin.com answers with `X-Frame-Options: DENY`
+# and a CSP `frame-ancestors` list that does not include 127.0.0.1, so an iframe
+# pointed at the real site is rejected outright. On Electron a webview is a
+# separate renderer guest, which `frame-ancestors` cannot reach; on DSHM the only
+# lever is to serve the document from the same origin. That route is
+# loopback-only and hard-wired to www.douyin.com — it is not a general forward
+# proxy.
 
 - insert:
     - id: dsh-douyin-webview

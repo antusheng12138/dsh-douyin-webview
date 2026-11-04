@@ -1,8 +1,8 @@
 {
   "name": "dsh-douyin-webview",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
-  "description": "An embedded Douyin window docked in the DSH sidebar: a real Electron webview guest, so douyin.com's X-Frame-Options: DENY no longer applies.",
+  "description": "An embedded Douyin window docked in the DSH sidebar: an Electron webview guest on Desktop, and a same-origin /__dyw reverse proxy (host half) for DSHM / browser shells without the preload bridge.",
   "license": "MIT",
   "keywords": [
     "dsh",
